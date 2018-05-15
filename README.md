@@ -29,15 +29,18 @@ RESTFUL API (develop with nodejs and redis)
         "name": "redis_rest_api",
         "version": "1.0.0",
         "dependencies": {
-            "body-parser": "^1.18.3",
+            "body-parser": "1.18.3",
             "compression": "1.7.2",
             "express": "4.16.3",
+            "express-validator": "5.2.0",
             "morgan": "1.9.0"
         },
         "dependenciesComments": {
             "morgan": "HTTP request logger middleware for node.js.",
             "compression": "Node.js compression middleware.",
-            "body-parser": "Node.js body parsing middleware."
+            "body-parser": "Node.js body parsing middleware.",
+            "express-validator":"for validate data form client request data (in middleware) https://github.com/chriso/validator.js,https://express-validator.github.io/docs/check-api.html,
+            https://www.npmjs.com/package/express-validator"
         }
     }
     ..\<project folder> $ npm install
@@ -86,19 +89,20 @@ RESTFUL API (develop with nodejs and redis)
         ..\<project folder> $ folder prodection
         ..\<project folder> $ file express.js
             import module
-                const express = require('express');
-                const morgan = require('morgan');
-                const compression = require('compression');
-                const bodyParser = require('body-parser');
+                const express = require('express')
+                const morgan = require('morgan')
+                const compression = require('compression')
+                const bodyParser = require('body-parser')
+                const validator = require('express-validator')
 
             create application function
                 const app = express()
 
             set env
                 if(process.env.NODE_ENV === 'development') {
-                app.use(morgan('dev'));
+                app.use(morgan('dev'))
                 }else{
-                    app.use(compression);
+                    app.use(compression)
                 }
 
             set body-parser (for get datatype request from client Ex.req.body)
@@ -107,16 +111,19 @@ RESTFUL API (develop with nodejs and redis)
                 }));
 
             set body-parser (json avaliable)
-                app.use(bodyParser.json());//json avaliable
+                app.use(bodyParser.json())//json avaliable
+
+            set validator after json avaliable
+                app.use(validator())
 
             set defult view render directory
-                app.set('views','./app/views');
+                app.set('views','./app/views')
 
             set route for usr controller
-                require('../app/routes/index.routes')(app);
+                require('../app/routes/index.routes')(app)
 
             set public resource directoty for client
-                app.use(express.static('./public'));
+                app.use(express.static('./public'))
             
             return function (for server.js)
                 return app;
