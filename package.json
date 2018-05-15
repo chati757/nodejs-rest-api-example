@@ -1,0 +1,15 @@
+{
+    "name": "redis_rest_api",
+    "version": "1.0.0",
+    "dependencies": {
+        "body-parser": "^1.18.3",
+        "compression": "1.7.2",
+        "express": "4.16.3",
+        "morgan": "1.9.0"
+    },
+    "dependenciesComments": {
+        "morgan": "HTTP request logger middleware for node.js.",
+        "compression": "Node.js compression middleware.",
+        "body-parser": "Node.js body parsing middleware."
+    }
+}
