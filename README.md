@@ -50,7 +50,30 @@ RESTFUL API (develop with nodejs and redis)
         ..\<project folder> $ folder controller
             ..\<project folder> $ file index.controller.js
 
-        ..\<project folder> $ folder models
+        ..\<project folder> $ folder models 
+            (for get and post json example)
+            ..\<project folder> $ folder example
+                ..\<project folder> $ file users.js
+                    var users = [
+                        {
+                            "id": 1,
+                            "username": "goldroger",
+                            "name": "Gol D. Roger",
+                            "position": "Pirate King"
+                        },
+                        {
+                            "id": 2,
+                            "username": "mrzero",
+                            "name": "Sir Crocodile",
+                            "position": "Former-Shichibukai"
+                        },
+                        {
+                            "id": 3,
+                            "username": "luffy",
+                            "name": "Monkey D. Luffy",
+                            "position": "Captain"
+                        }
+                    ]
 
         ..\<project folder> $ folder routers
             ..\<project folder> $ file index.route.js
