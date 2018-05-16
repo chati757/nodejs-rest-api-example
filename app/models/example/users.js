@@ -1,3 +1,12 @@
+let admin = [
+    {
+        "id": 0,
+        "username": "admin",
+        "name": "black cyber master",
+        "position": "unknow"
+    }
+]
+
 let users = [
     {
         "id": 1,
