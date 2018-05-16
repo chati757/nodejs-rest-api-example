@@ -11,24 +11,41 @@ exports.findall_user = (req,res) => {
 
 exports.findbyid_user = (req,res) => {
     console.log('findbyid_user')
+    //console.log(req.params.id)
+    
+    req.checkParams('id','id not integer').isNumeric()
+    req.sanitizeParams('id').trim(':')
+    req.sanitizeParams('id').toInt()
     console.log(req.params.id)
-    req.sanitizeParams().trim(':')
-    //req.checkParams('id','id not integer').isNumeric()
     let errors = req.validationErrors()
     if(errors){
         console.log(errors)
-        res.end('error id not integer')
+        res.end('error id not integer id')
         console.log('findbyid_user:error')
-        return
+        //return
     }
     else{
         console.log('findbyid_user:pass')
-        console.log(req.params)
-        return
+        let users_json_filter_Promise= new Promise((resolve,reject)=>{
+            resolve(
+                users_json_ex.filter(e=>e.id===req.params.id)
+            )
+            reject(
+                'database filtering id failed'
+            )
+        })
+        //res.json(users_json_filter)
+        users_json_filter_Promise
+        .then(e=>{
+            console.log('inthen')
+            res.json(e)
+        })
+        .catch(e=>{
+            console.log('catch')
+            res.json('error:',e)
+        })
     }
-    //req.params.id.
-    //check id is number
+    
     
 }
-
 //update or edit data
