@@ -1,4 +1,4 @@
-# redis_rest_api
+# nodejs-rest-api-example
 RESTFUL API (develop with nodejs and redis)
 
 ## installation
@@ -13,10 +13,6 @@ RESTFUL API (develop with nodejs and redis)
    *set path env in installtion path
    *check installation with node -v
 
-### install redis database (Stable)
-
-    https://redis.io/download
-
 ## build structure
 ### create project (cmd) (result:project folder)
 
@@ -26,7 +22,7 @@ RESTFUL API (develop with nodejs and redis)
 
     ..\<project folder> $ create file package.json
     {
-        "name": "redis_rest_api",
+        "name": "nodejs_rest_api_example",
         "version": "1.0.0",
         "dependencies": {
             "body-parser": "1.18.3",
@@ -148,5 +144,20 @@ RESTFUL API (develop with nodejs and redis)
         (optional for reuse server application)
             module.exports = app; //for reuse
 
-## configuration
-### redis configuration
+### security (additional)
+
+## anti CSRF ,insecure caching and clickjacking (middleware security)
+    express.csrf
+    https://www.youtube.com/watch?v=_mp535F18Qg
+
+    json-web-tokens
+    https://www.youtube.com/watch?v=xBYr9DxDqyU
+
+    helment
+    https://www.npmjs.com/package/helmet
+
+## TLS
+    https://nodejs.org/api/tls.html
+
+## encypt data (Ex.post data)
+    https://nodejs.org/api/crypto.html
