@@ -146,6 +146,9 @@ RESTFUL API (develop with nodejs and redis)
 
 ### security (additional)
 
+## vulnerability syntax extension
+    https://nodesecurity.io/advisories/
+
 ## anti CSRF ,insecure caching and clickjacking (middleware security)
     express.csrf
     https://www.youtube.com/watch?v=_mp535F18Qg
