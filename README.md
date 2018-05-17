@@ -6,14 +6,14 @@ RESTFUL API (develop with nodejs and redis)
 
     https://code.visualstudio.com/
 
-### nodejs install (download LTS version)
+### install nodejs (download LTS version)
    
     http://nodejs.org
     
    *set path env in installtion path
    *check installation with node -v
 
-### redis database install (Stable)
+### install redis database (Stable)
 
     https://redis.io/download
 
