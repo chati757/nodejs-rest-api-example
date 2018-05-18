@@ -144,23 +144,76 @@ RESTFUL API (develop with nodejs and redis)
         (optional for reuse server application)
             module.exports = app; //for reuse
 
-### security (additional)
+## security (additional)
 
-## vulnerability syntax extension
+### vulnerability syntax extension
     https://nodesecurity.io/advisories/
 
-## anti CSRF ,insecure caching and clickjacking (middleware security)
-    express.csrf
+### about oauth(open authorization) 2.0 password grant 4 type
+    1.authorization code flow
+    2.lmplicit flow
+    3.owner password credentials flow <--usring this
+    4.client credentials flow
+
+    refer:https://medium.com/@taengtrirongpholphimai/%E0%B8%A1%E0%B8%B2%E0%B8%A3%E0%B8%B9%E0%B9%89%E0%B8%88%E0%B8%B1%E0%B8%81-oauth2-%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%94%E0%B8%B5%E0%B8%81%E0%B8%A7%E0%B9%88%E0%B8%B2-8b649fd5d675
+    
+    *all oauth 2.0 using token . Consequently , secure rest api it's must have token to work
+    *some cases using a session(serversite) intead of a token
+
+### about tokens (type of cookie)
+    type of tokens
+        self-contained tokens
+        reference tokens
+            access token
+            refresh token
+
+    token rules
+        1.unique
+        2.can not edit token (even if editing that it's must be invalid stage or cannot use)
+        3.short life span (should be (1min<1hr) for access token and (<2week) for refresh token)
+        4.hard to predictable (hashing use uuid(if same value re-generate),private key(one key),secret key
+        (per token)) *incase token have been stolen ,changing private key for resolve
+        5.one time to use (stateful way : store token in to database like redis database)(if client request token again,old token it's must be revoke immediately)
+        6.can revoke *incase revoke refresh token or regenerate refresh token ,should be revoke access token pair itself too
+        7.no important data in the token to decypted (*do not store data like password or credential of transfer in token)
+        8.using one way hashing (cannot decypt) (recommended SHA-3)
+        9.limit token authority to access level (Ex.token1 can access level 1-3 token2 can access level 4-6 etc..) * token authority data should be store in database ,do not store in token because server can not edit authority data in realtime (cache in redis or store another database)
+
+        *timing attack protection (compare stage) 
+            Ex.public static boolean  MessageDigest.isEqual(byte[] digesta, byte[] digestb)
+
+### anti CSRF ,insecure caching and clickjacking (middleware security)
+    express.csrf (cross-site request forgery protection with troken)
     https://www.youtube.com/watch?v=_mp535F18Qg
 
-    json-web-tokens
+    JWT(json-web-tokens) (one in many standard token)
     https://www.youtube.com/watch?v=xBYr9DxDqyU
+        structure XXXX.YYYY.ZZZZ
+        XXXX = base64_encode(header)
+            typ : 'JWT' 
+            alg : '<algorithm for hash Ex.HS512>'
+        YYYY = base64_encode(payload)
+            iss : "<unique id >"
+            iat : <create time>
+            exp : <expiration time>
+        ZZZZ = base64_encode(sign(payload, header.algorithm, SECRET_KEY))(signature)
+            var signature = sign(
+                payload, 
+                header.alg, 
+                <Secret_Key>
+            );
+            var ZZZZ = base64_encode(signature);
 
-    helment
+    helmet ([csp]content security policy,[xframe]iframe protection from another)
     https://www.npmjs.com/package/helmet
 
-## TLS
+### HTTPS/TLS
     https://nodejs.org/api/tls.html
 
-## encypt data (Ex.post data)
+### HTTP Digest Authentication
+
+### encypt data (Ex.post data)
     https://nodejs.org/api/crypto.html
+
+### hiden x-power-by header (attacker can determine what technology)
+    https://www.youtube.com/watch?v=W-8XeQ-D1RI
