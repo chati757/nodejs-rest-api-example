@@ -162,8 +162,8 @@ RESTFUL API (develop with nodejs and redis)
 
 ### about tokens (type of cookie)
     type of tokens
-        self-contained tokens
-        reference tokens
+        self-contained tokens <--usring this
+        reference tokens (doesn’t contain useful information)(this is similar to session)
             access token
             refresh token
 
