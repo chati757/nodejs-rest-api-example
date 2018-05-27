@@ -4,7 +4,8 @@ const compression = require('compression')
 const bodyParser = require('body-parser')
 const validator = require('express-validator')
 
-module.exports = function(){
+
+exports.mainconfig = function(){
     const app = express()
     if(process.env.NODE_ENV === 'development') {
         app.use(morgan('dev'))
@@ -18,11 +19,15 @@ module.exports = function(){
     app.use(bodyParser.json())//json avaliable
     app.use(validator())
 
+    //-----------------view----------------------
     app.set('views','./app/views')
 
-    require('../app/routes/index.route')(app) //call module.exports = function(app) in index.routes.js
-    
+    //-----------------resource------------------
     app.use(express.static('./public'))
+
+    //-----------------route---------------------
+    require('../app/routes/index.route')(app) //call module.exports = function(app) in index.routes.js
+
 
     return app;
 }
