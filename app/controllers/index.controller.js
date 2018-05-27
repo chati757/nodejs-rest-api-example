@@ -2,21 +2,26 @@ const jwt = require('jsonwebtoken')
 let users_json_ex = require('../models/example/users')
 
 //format of token
-    //Authorization: Bearer <access_token> or api_key: <api_key>
-//<access token>
+    //Authorization: Bearer <access_token> or api_key <api_key>
+//<access token> or <api_key>
 function verifyToken(req,res,next){
     console.log("in verifyToken stage")
-    const bearerHeader = req.headers['authotization']
+    const api_key_header = req.headers['authotization']
     //check access token stage
-    if(typeof bearerHeader !=='undefined'){
+    if(typeof api_key_header !=='undefined'){
         // Split at the space
-        const bearer = bearerHeader.split(' ')
+        const api_key = api_key_header.split(' ')
         // Get token from array
-        const bearerToken = bearer[1]
-        // set the token
-        req.token = bearerToken
-        // goto next middleware
+        const api_key_header_Token = api_key[1]
+        // check api_key_header_Token in database
+            // set the token
+            // get signature from post data
+            // split signature --> <data_cmd> + <api_secret_key> = <api_secret_key>
+            // req.data_cmd = <data_cmd>
+            // req.api_secret_key = <api_secret_key>
+            // goto next middleware
         next()
+        //res.sendStatus(403)
     }else{
         //forbidden
         res.sendStatus(403)
@@ -37,24 +42,37 @@ exports.main = (req,res) => {
 }
 
 
-exports.get_api_key = (req,res) => {
+exports.sign = (req,res) => {
     //--------------------------sanitize------------------------------
     //-------------------checkdata in database------------------------
     //---------------------response with token------------------------
-    //send token to client
+    //generate api-key and get into database
+    //send api-key and tokens(secret key)
     //jwt.sign(payload, secretOrPrivateKey, [options, callback])
     jwt.sign({
         id:users_json_ex.id,
         username:users_json_ex.username,
-        password:users_json_ex.password
-    },'secretkey',(err,token) => {
-        console.log("token provided:",token)
+        password:users_json_ex.password,
+        api_key:api_key
+    },'secretkey',(err,api_secret_key) => {
+        console.log("token provided:",api_secret_key)
+        req.api_secret_key
     })
     
 }
 
 exports.finddesination_user = verifyToken,(req,res) => {
+    //verify api_secret_key
+    jwt.verify(req.api_secret_key,'secretkey',(err,authData)=>{
+        if(err){
+            res.sendStatus(403)
+        }else{
+            res.json({authData})
+            //use req.data_cmd for filter userdata
+            //if can authData , response desination_user
+        }
 
+    })
 }
 
 exports.findall_user = verifyToken,(req,res) => {
@@ -63,8 +81,8 @@ exports.findall_user = verifyToken,(req,res) => {
     res.json(users_json_ex)
 }
 
-//user and admin
-exports.findbyid_user = verifyToken,(req,res) => {
+//sanitize testing
+exports.findbyid_user = (req,res) => {
     //console.log('findbyid_user')
     //console.log(req.params.id)
     //--------------------------check and sanitize---------------------------------
@@ -106,12 +124,13 @@ exports.findbyid_user = verifyToken,(req,res) => {
             res.json('error:',e)
         })
         */
-        getbyid(1)
+        getbyid(req.params.id)
         .then(e=>{
-            res.json(e)
+            res.end(e[0].name)
         })
         .catch(e=>{
-            res.json('error:',e)
+            console.log('error id data out of scope in database')
+            res.end('error:no id')
         })
         
     }
