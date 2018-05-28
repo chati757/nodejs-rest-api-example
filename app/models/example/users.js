@@ -1,6 +1,8 @@
 let users = [
     {
         "id": 0,
+        "uuid":"",
+        "api_key":"",
         "username": "admin",
         "password": "admin123",
         "name": "black cyber master",
@@ -8,6 +10,8 @@ let users = [
     },
     {
         "id": 1,
+        "uuid":"",
+        "api_key":"",
         "username": "goldroger",
         "password": "goldroger123",
         "name": "Gol D. Roger",
@@ -16,6 +20,8 @@ let users = [
     },
     {
         "id": 2,
+        "uuid":"",
+        "api_key":"",
         "username": "mrzero",
         "password": "mrzero123",
         "name": "Sir Crocodile",
@@ -24,6 +30,8 @@ let users = [
     },
     {
         "id": 3,
+        "uuid":"",
+        "api_key":"",
         "username": "luffy",
         "password": "luffy123",
         "name": "Monkey D. Luffy",

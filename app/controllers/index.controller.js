@@ -1,49 +1,44 @@
 const jwt = require('jsonwebtoken')
 let users_json_ex = require('../models/example/users')
 
-//format of token
-    //Authorization: Bearer <access_token> or api_key <api_key>
-//<access token> or <api_key>
-function verifyToken(req,res,next){
-    console.log("in verifyToken stage")
-    const api_key_header = req.headers['authotization']
-    //check access token stage
-    if(typeof api_key_header !=='undefined'){
-        // Split at the space
-        const api_key = api_key_header.split(' ')
-        // Get token from array
-        const api_key_header_Token = api_key[1]
-        // check api_key_header_Token in database
-            // set the token
-            // get signature from post data
-            // split signature --> <data_cmd> + <api_secret_key> = <api_secret_key>
-            // req.data_cmd = <data_cmd>
-            // req.api_secret_key = <api_secret_key>
-            // goto next middleware
-        next()
-        //res.sendStatus(403)
+exports.main = (req,res) => {
+    res.render('index',{title:'rest api example'})
+}
+
+exports.validator_testing = (req,res) => {
+    req.checkBody('testusername','username is not en-US please change your language first!')
+    .matches('[@gmail.com|@hotmail.com]$')
+    /*
+    req.checkBody('testpassword','password is not en-US or password is spacial character!')
+    .isAlphanumeric()
+    req.checkBody('testemail','username is not en-US please change your language first!')
+    .isEmail().matches('@gmail.com','@hotmail.com')
+    */
+    //https://stackoverflow.com/questions/9256567/validating-gmail-id-using-javascript-and-jquery
+    //req.sanitizeBody
+    let errors = req.validationErrors()
+    if(errors){
+        //console.log(errors)
+        //res.end('error id not integer id')
+        res.end(errors[0].msg)
+        //console.log('findbyid_user:error')
+        //return
     }else{
-        //forbidden
-        res.sendStatus(403)
+        console.log('inelse')
+        console.log(req.body.testusername)
+        //console.log(req.body.testpassword)
+        //console.log(req.body.testemail)
+        //res.end(req.body.testusername)
     }
 }
 
-//how to use it ?
-    /*                              add this position
-                                        |
-                                        v
-        exports.middlewareexample = verifyToken,(req,res) => {
-            ...
-        }
-    */
-
-exports.main = (req,res) => {
-    res.end('hello world')
-}
-
-
 exports.sign = (req,res) => {
     //--------------------------sanitize------------------------------
+    //username (en,)
+    //password
+
+    //email
+
     //-------------------checkdata in database------------------------
     //---------------------response with token------------------------
     //generate api-key and get into database
@@ -137,14 +132,41 @@ exports.findbyid_user = (req,res) => {
     //------------------------------------------------------------------------------
 }
 
-exports.new_user = verifyToken,()=>{
-//show new user object
+//format of token
+    //Authorization: Bearer <access_token> or api_key <api_key>
+//<access token> or <api_key>
+function verifyToken(req,res,next){
+    console.log("in verifyToken stage")
+    const api_key_header = req.headers['authotization']
+    //check access token stage
+    if(typeof api_key_header !=='undefined'){
+        // Split at the space
+        const api_key = api_key_header.split(' ')
+        // Get token from array
+        const api_key_header_Token = api_key[1]
+        // check api_key_header_Token in database
+            // set the token
+            // get signature from post data
+            // split signature --> <data_cmd> + <api_secret_key> = <api_secret_key>
+            // req.data_cmd = <data_cmd>
+            // req.api_secret_key = <api_secret_key>
+            // goto next middleware
+        next()
+        //res.sendStatus(403)
+    }else{
+        //forbidden
+        res.sendStatus(403)
+    }
 }
 
-exports.update_user = verifyToken,()=>{
-//show update user object
-}
-//update or edit data
+//how to use it ?
+    /*                              add this position
+                                        |
+                                        v
+        exports.middlewareexample = verifyToken,(req,res) => {
+            ...
+        }
+    */
 
 //get data with id function
 getbyid = (id) =>{

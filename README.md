@@ -22,21 +22,25 @@ RESTFUL API (develop with nodejs and redis)
 
     ..\<project folder> $ create file package.json
     {
-        "name": "nodejs_rest_api_example",
+        "name": "example_rest_api",
         "version": "1.0.0",
         "dependencies": {
             "body-parser": "1.18.3",
             "compression": "1.7.2",
+            "ejs": "^2.6.1",
             "express": "4.16.3",
             "express-validator": "5.2.0",
-            "morgan": "1.9.0"
+            "jsonwebtoken": "^8.2.1",
+            "morgan": "1.9.0",
+            "uuid-apikey": "^1.3.5"
         },
         "dependenciesComments": {
             "morgan": "HTTP request logger middleware for node.js.",
             "compression": "Node.js compression middleware.",
             "body-parser": "Node.js body parsing middleware.",
-            "express-validator":"for validate data form client request data (in middleware) https://github.com/chriso/validator.js,https://express-validator.github.io/docs/check-api.html,
-            https://www.npmjs.com/package/express-validator"
+            "jsonwebtoken": "jsontokens for anti-csrf and customizing for future function in middleware.",
+            "ejs": "Embedded JavaScript templates (templates engine)",
+            "uuid-apikey": "generate apikey for client"
         }
     }
     ..\<project folder> $ npm install
@@ -55,22 +59,43 @@ RESTFUL API (develop with nodejs and redis)
                 ..\<project folder> $ file users.js
                     var users = [
                         {
+                            "id": 0,
+                            "uuid":"",
+                            "api_key":"",
+                            "username": "admin",
+                            "password": "admin123",
+                            "name": "black cyber master",
+                            "position": "unknow"
+                        },
+                        {
                             "id": 1,
+                            "uuid":"",
+                            "api_key":"",
                             "username": "goldroger",
+                            "password": "goldroger123",
                             "name": "Gol D. Roger",
-                            "position": "Pirate King"
+                            "position": "Pirate King",
+                            "destination_id":2
                         },
                         {
                             "id": 2,
+                            "uuid":"",
+                            "api_key":"",
                             "username": "mrzero",
+                            "password": "mrzero123",
                             "name": "Sir Crocodile",
-                            "position": "Former-Shichibukai"
+                            "position": "Former-Shichibukai",
+                            "destination_id":3
                         },
                         {
                             "id": 3,
+                            "uuid":"",
+                            "api_key":"",
                             "username": "luffy",
+                            "password": "luffy123",
                             "name": "Monkey D. Luffy",
-                            "position": "Captain"
+                            "position": "Captain",
+                            "desination_id":1
                         }
                     ]
 
@@ -148,6 +173,9 @@ RESTFUL API (develop with nodejs and redis)
 
 ### vulnerability syntax extension
     https://nodesecurity.io/advisories/
+
+### data varidator
+    https://validatejs.org/
 
 ### about oauth(open authorization) 2.0 password grant 4 type
     1.authorization code flow
