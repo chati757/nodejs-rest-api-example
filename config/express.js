@@ -4,7 +4,15 @@ const compression = require('compression')
 const bodyParser = require('body-parser')
 const express_validator = require('express-validator')
 const ejs = require('ejs')
-
+//controller
+const jwt = require('jsonwebtoken')
+exports.jsonwebtoken = function(){
+    return jwt
+}
+const uuid_api_key = require('uuid-apikey')
+exports.uuid_api_key = function(){
+    return uuid_api_key
+}
 
 exports.mainconfig = function(){
     const app = express()
@@ -30,5 +38,5 @@ exports.mainconfig = function(){
     require('../app/routes/index.route')(app) //call module.exports = function(app) in index.routes.js
 
 
-    return app;
+    return app
 }

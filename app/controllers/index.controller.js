@@ -1,4 +1,5 @@
-const jwt = require('jsonwebtoken')
+const jwt = require('../../config/express.js').jsonwebtoken()
+const uuid_apikey_gen = require('../../config/express.js').uuid_api_key()
 let users_json_ex = require('../models/example/users')
 
 exports.main = (req,res) => {
@@ -6,16 +7,22 @@ exports.main = (req,res) => {
 }
 
 exports.validator_testing = (req,res) => {
+    //------------------------------------checkdata-------------------------------------
+    req.checkBody('testusername','username is empty')
+    .notEmpty()
     req.checkBody('testusername','username is not en-US please change your language first!')
-    .matches('[@gmail.com|@hotmail.com]$')
-    /*
+    .isAlphanumeric()
+    req.checkBody('testpassword','password is empty')
+    .notEmpty()
     req.checkBody('testpassword','password is not en-US or password is spacial character!')
     .isAlphanumeric()
-    req.checkBody('testemail','username is not en-US please change your language first!')
-    .isEmail().matches('@gmail.com','@hotmail.com')
-    */
-    //https://stackoverflow.com/questions/9256567/validating-gmail-id-using-javascript-and-jquery
-    //req.sanitizeBody
+    req.checkBody('testemail','email not detected please check email input again')
+    .notEmpty().isEmail()
+    req.checkBody('testemail','use gmail or hotmail only Example: xxx@gmail.com or xxx@hotmail.com')
+    .matches('@gmail.com|@hotmail.com')//gmail and hotmail only
+    //-------------------------------------sanitize--------------------------------------
+    req.sanitizeBody('testemail').normalizeEmail()
+    //---------------------------------check in database---------------------------------
     let errors = req.validationErrors()
     if(errors){
         //console.log(errors)
@@ -24,40 +31,65 @@ exports.validator_testing = (req,res) => {
         //console.log('findbyid_user:error')
         //return
     }else{
-        console.log('inelse')
+        console.log('inelse:datapass:check in database')
         console.log(req.body.testusername)
+        findbyuser_email_exist(req.body.testusername,req.body.testemail)
+        .then(e=>{
+            //found
+            if(e===true){
+                throw 'error : username is exist in database'
+            }else{
+                console.log('username is available')
+                //check api_key in database
+                const buffer_apikey=uuid_apikey_gen.create()
+                findbyapikeyexist(buffer_apikey)
+                .then(e=>{
+                    if(e===true){
+                        throw 'error : apikey is exist in database'
+                    }
+                    else{
+                        console.log('apikey is available')
+                        //put api_key in database
+                        console.log(buffer_apikey)
+                    
+                        //response api_key and secret_api_key
+                        jwt.sign({
+                            id:users_json_ex.id,
+                            username:users_json_ex.username,
+                            password:users_json_ex.password,
+                            api_key:buffer_apikey.apiKey
+                        },'secretkey',(err,api_secret_key) => {
+                            //console.log("token provided:",api_secret_key)
+                            res.json({
+                                title:'rest api example',
+                                uu_id:buffer_apikey.uuid,
+                                api_key:buffer_apikey.apiKey,
+                                api_secret_key:api_secret_key
+                            })
+                        })
+                    }
+                })
+                .catch(e=>{
+                    //connot connect database
+                    res.end(e)
+                })
+            }
+        })
+        .catch(e=>{
+            //connot connect database
+            res.end(e)
+        })
         //console.log(req.body.testpassword)
         //console.log(req.body.testemail)
-        //res.end(req.body.testusername)
+        
     }
-}
-
-exports.sign = (req,res) => {
-    //--------------------------sanitize------------------------------
-    //username (en,)
-    //password
-
-    //email
-
-    //-------------------checkdata in database------------------------
-    //---------------------response with token------------------------
-    //generate api-key and get into database
-    //send api-key and tokens(secret key)
-    //jwt.sign(payload, secretOrPrivateKey, [options, callback])
-    jwt.sign({
-        id:users_json_ex.id,
-        username:users_json_ex.username,
-        password:users_json_ex.password,
-        api_key:api_key
-    },'secretkey',(err,api_secret_key) => {
-        console.log("token provided:",api_secret_key)
-        req.api_secret_key
-    })
-    
 }
 
 exports.finddesination_user = verifyToken,(req,res) => {
     //verify api_secret_key
+    console.log('finddesination_user')
+    res.end()
+    /*
     jwt.verify(req.api_secret_key,'secretkey',(err,authData)=>{
         if(err){
             res.sendStatus(403)
@@ -68,6 +100,7 @@ exports.finddesination_user = verifyToken,(req,res) => {
         }
 
     })
+    */
 }
 
 exports.findall_user = verifyToken,(req,res) => {
@@ -144,21 +177,32 @@ function verifyToken(req,res,next){
         const api_key = api_key_header.split(' ')
         // Get token from array
         const api_key_header_Token = api_key[1]
+        console.log('api_key handle..')
+        console.log(api_key[1])
         // check api_key_header_Token in database
+        findbyapikeyexist(api_key[1])
+        .then(e=>{
             // set the token
             // get signature from post data
+            // check is encoded
+                //sanitize '-'
+                //check body is isAlphanumeric
+            // decode signature
             // split signature --> <data_cmd> + <api_secret_key> = <api_secret_key>
             // req.data_cmd = <data_cmd>
             // req.api_secret_key = <api_secret_key>
             // goto next middleware
-        next()
-        //res.sendStatus(403)
+            next()
+        })
+        .catch(e=>{
+            //connot connect database
+            res.end(e)
+        })
     }else{
         //forbidden
         res.sendStatus(403)
     }
 }
-
 //how to use it ?
     /*                              add this position
                                         |
@@ -177,6 +221,30 @@ getbyid = (id) =>{
         )
         reject(
             'database filtering id failed'
+        )
+    })
+}
+
+findbyuser_email_exist = (username,email) =>{
+    console.log("findbyuser_email_exist")
+    return new Promise((resolve,reject)=>{
+        resolve(
+            users_json_ex.some(e=>e.username===username || e.email===email)
+        )
+        reject(
+            'error connot conncet database'
+        )
+    })
+}
+
+findbyapikeyexist = (api_key) =>{
+    console.log("findbyapikeyexist")
+    return new Promise((resolve,reject)=>{
+        resolve(
+            users_json_ex.some(e=>e.api_key===api_key)
+        )
+        reject(
+            'error connot conncet database'
         )
     })
 }
