@@ -49,16 +49,17 @@ exports.validator_testing = (req,res) => {
                     }
                     else{
                         console.log('apikey is available')
-                        //put api_key in database
+                        //put api_key in database [id,username,password,apiKey]
                         console.log(buffer_apikey)
                     
                         //response api_key and secret_api_key
                         jwt.sign({
                             id:users_json_ex.id,
                             username:users_json_ex.username,
-                            password:users_json_ex.password,
                             api_key:buffer_apikey.apiKey
-                        },'secretkey',(err,api_secret_key) => {
+                            //algorithm:'HS256' is mean HMAC(algorithm) with SHA-256(hash function)
+                            //and more algorithm https://github.com/auth0/java-jwt in Available Algorithms section
+                        },'secretkey',{algorithm:'HS256'},(err,api_secret_key) => {
                             //console.log("token provided:",api_secret_key)
                             res.json({
                                 title:'rest api example',
@@ -86,11 +87,8 @@ exports.validator_testing = (req,res) => {
 }
 
 exports.finddesination_user = verifyToken,(req,res) => {
-    //verify api_secret_key
-    console.log('finddesination_user')
-    res.end()
     /*
-    jwt.verify(req.api_secret_key,'secretkey',(err,authData)=>{
+    jwt.verify(api_secret_key,'secretkey',(err,authData)=>{
         if(err){
             res.sendStatus(403)
         }else{
@@ -176,7 +174,6 @@ function verifyToken(req,res,next){
         // Split at the space
         const api_key = api_key_header.split(' ')
         // Get token from array
-        const api_key_header_Token = api_key[1]
         console.log('api_key handle..')
         console.log(api_key[1])
         // check api_key_header_Token in database
@@ -186,13 +183,24 @@ function verifyToken(req,res,next){
             // get signature from post data
             // check is encoded
                 //sanitize '-'
+            req.checkBody('signature','signature not detected').notEmpty()
+            req.sanitizeBody('signature').trim('-')
+            console.log('after sanitizeBody signature')
+            console.log(req.body.signature)
                 //check body is isAlphanumeric
-            // decode signature
-            // split signature --> <data_cmd> + <api_secret_key> = <api_secret_key>
-            // req.data_cmd = <data_cmd>
-            // req.api_secret_key = <api_secret_key>
-            // goto next middleware
-            next()
+            req.checkBody('signature','signature not detected').isAlphanumeric()
+            let errors = req.validationErrors()
+            if(errors){
+                //api_key is empty or not Alphanumeric
+                res.sendStatus(403)
+            }else{
+                console.log('inelse:datapass:decode signature..')
+                // decode signature
+                // split signature --> <data_cmd> + <api_secret_key>
+                // req.api_secret_key = <api_secret_key>
+                // req.data_cmd = <data_cmd>
+                next()
+            }
         })
         .catch(e=>{
             //connot connect database

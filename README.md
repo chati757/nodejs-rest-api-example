@@ -185,7 +185,7 @@ RESTFUL API (develop with nodejs and redis)
 
     refer:https://medium.com/@taengtrirongpholphimai/%E0%B8%A1%E0%B8%B2%E0%B8%A3%E0%B8%B9%E0%B9%89%E0%B8%88%E0%B8%B1%E0%B8%81-oauth2-%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%94%E0%B8%B5%E0%B8%81%E0%B8%A7%E0%B9%88%E0%B8%B2-8b649fd5d675
     
-    *all oauth 2.0 using token . Consequently , secure rest api it's must have token to work
+    *all oauth 2.0 using token . Consequently ,the secure in rest api it's must have token to work with
     *some cases using a session(serversite) intead of a token
 
 ### about tokens (type of cookie)
@@ -228,9 +228,12 @@ RESTFUL API (develop with nodejs and redis)
             var signature = sign(
                 payload, 
                 header.alg, 
-                <Secret_Key>
+                <Secret_Key> or <private key> and <public key>
             );
-            var ZZZZ = base64_encode(signature);
+            var ZZZZ(token) = base64_encode(signature);
+    *JWT have 2 mode
+        1.asymmetric encryption (<private key> and <public key>)
+        2.one way encyption (<Secret_Key> )
 
     helmet ([csp]content security policy,[xframe]iframe protection from another)
     https://www.npmjs.com/package/helmet
@@ -238,9 +241,35 @@ RESTFUL API (develop with nodejs and redis)
 ### HTTPS/TLS
     https://nodejs.org/api/tls.html
 
-### HTTP Digest Authentication
+### encyption
+    type of encyption (3 types)
+        1.symmetric encryption usring secret key for encypt and decypt
+            Ex.
+                plain text + secret key = encypted data
+                user send secret key to receiver (confidential of solution)
+                receiver use the scret key to decypt encypted data
 
-### encypt data (Ex.post data)
+        2.asymmetric encryption usring public key for encypt and privete key for decypt
+            2.1 encyption type (keep secret of data)
+                owner send public key to someone for encypt data (some one who needs to send data to owner) and the owner have a private keyfor decypt it 
+
+            2.2 digital signature type (for authentication)
+                1.sender -->[data]-->[digest data] + [private key] (for encypt) = [digital signature]
+                2.sender send [digest data] and [digital signature] to receiver
+                3.receiver --> [digital signature] + [public key] (for decypt) = digest data
+                4.receiver compare between digest data from yourself and digest data from sender
+                5.if data is match it's mean data form sender is correct
+
+        3.message digest algorithm (one way encyption) 
+            Ex.SHA-256:Is unkeyed cryptographic hash function
+    *ref : http://vzrnote.blogspot.com/2015/11/blog-post.html
+
+    type of hash function
+        https://en.wikipedia.org/wiki/List_of_hash_functions
+    
+    
+
+### encypt data library(Ex.post data)
     https://nodejs.org/api/crypto.html
 
 ### hiden x-power-by header (attacker can determine what technology)
