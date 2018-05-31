@@ -215,6 +215,7 @@ RESTFUL API (develop with nodejs and redis)
     https://www.youtube.com/watch?v=_mp535F18Qg
 
     JWT(json-web-tokens) (one in many standard token)
+    https://github.com/auth0/node-jsonwebtoken
     https://www.youtube.com/watch?v=xBYr9DxDqyU
         structure XXXX.YYYY.ZZZZ
         XXXX = base64_encode(header)
@@ -233,6 +234,7 @@ RESTFUL API (develop with nodejs and redis)
             var ZZZZ(token) = base64_encode(signature);
     *JWT have 2 mode
         1.asymmetric encryption (<private key> and <public key>)
+            ref : https://github.com/auth0/node-jsonwebtoken
         2.one way encyption (<Secret_Key> )
 
     helmet ([csp]content security policy,[xframe]iframe protection from another)
