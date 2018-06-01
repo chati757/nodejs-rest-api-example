@@ -32,7 +32,8 @@ RESTFUL API (develop with nodejs and redis)
             "express-validator": "5.2.0",
             "jsonwebtoken": "^8.2.1",
             "morgan": "1.9.0",
-            "uuid-apikey": "^1.3.5"
+            "uuid-apikey": "^1.3.5",
+            "keypair" : "1.0.1"
         },
         "dependenciesComments": {
             "morgan": "HTTP request logger middleware for node.js.",
@@ -40,7 +41,8 @@ RESTFUL API (develop with nodejs and redis)
             "body-parser": "Node.js body parsing middleware.",
             "jsonwebtoken": "jsontokens for anti-csrf and customizing for future function in middleware.",
             "ejs": "Embedded JavaScript templates (templates engine)",
-            "uuid-apikey": "generate apikey for client"
+            "uuid-apikey": "generate apikey for client",
+            "keypair" : "rsa (public key and private key) generator"
         }
     }
     ..\<project folder> $ npm install

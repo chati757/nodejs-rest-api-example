@@ -13,6 +13,10 @@ const uuid_api_key = require('uuid-apikey')
 exports.uuid_api_key = function(){
     return uuid_api_key
 }
+const key_pair = require('keypair')
+exports.key_pair = function(){
+    return key_pair
+}
 
 exports.mainconfig = function(){
     const app = express()

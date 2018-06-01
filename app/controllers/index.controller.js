@@ -1,5 +1,6 @@
 const jwt = require('../../config/express.js').jsonwebtoken()
 const uuid_apikey_gen = require('../../config/express.js').uuid_api_key()
+const key_pair = require('../../config/express.js').key_pair()
 let users_json_ex = require('../models/example/users')
 
 exports.main = (req,res) => {
@@ -41,33 +42,25 @@ exports.validator_testing = (req,res) => {
             }else{
                 console.log('username is available')
                 //check api_key in database
-                const buffer_apikey=uuid_apikey_gen.create()
-                findbyapikeyexist(buffer_apikey)
+                const buffer_uuid_apikey=uuid_apikey_gen.create()
+                const buffer_keypair = key_pair()
+                findbypublicandapikeyexist(buffer_uuid_apikey.apiKey,buffer_keypair.public)
                 .then(e=>{
                     if(e===true){
                         throw 'error : apikey is exist in database'
                     }
                     else{
-                        console.log('apikey is available')
+                        console.log('apikey and public key is available')
                         //put api_key in database [id,username,password,apiKey]
-                        console.log(buffer_apikey)
-                    
+                        console.log(buffer_keypair)
+                        console.log(buffer_uuid_apikey)
                         //response api_key and secret_api_key
-                        jwt.sign({
-                            id:users_json_ex.id,
-                            username:users_json_ex.username,
-                            api_key:buffer_apikey.apiKey
-                            //algorithm:'HS256' is mean HMAC(algorithm) with SHA-256(hash function)
-                            //and more algorithm https://github.com/auth0/java-jwt in Available Algorithms section
-                        },'secretkey',{algorithm:'HS256'},(err,api_secret_key) => {
-                            //console.log("token provided:",api_secret_key)
-                            res.json({
-                                title:'rest api example',
-                                uu_id:buffer_apikey.uuid,
-                                api_key:buffer_apikey.apiKey,
-                                api_secret_key:api_secret_key
-                            })
-                        })
+                        res.json(
+                            {
+                                'api key':buffer_uuid_apikey.apiKey,
+                                'secret key':buffer_keypair.private
+                            }
+                        )
                     }
                 })
                 .catch(e=>{
@@ -87,18 +80,9 @@ exports.validator_testing = (req,res) => {
 }
 
 exports.finddesination_user = verifyToken,(req,res) => {
-    /*
-    jwt.verify(api_secret_key,'secretkey',(err,authData)=>{
-        if(err){
-            res.sendStatus(403)
-        }else{
-            res.json({authData})
-            //use req.data_cmd for filter userdata
-            //if can authData , response desination_user
-        }
-
-    })
-    */
+    //decode data
+    console.log(req.decoded)
+    res.end('complete')
 }
 
 exports.findall_user = verifyToken,(req,res) => {
@@ -179,31 +163,47 @@ function verifyToken(req,res,next){
         // check api_key_header_Token in database
         findbyapikeyexist(api_key[1])
         .then(e=>{
-            // set the token
-            // get signature from post data
-            // check is encoded
-                //sanitize '-'
-            req.checkBody('signature','signature not detected').notEmpty()
-            req.sanitizeBody('signature').trim('-')
-            console.log('after sanitizeBody signature')
-            console.log(req.body.signature)
-                //check body is isAlphanumeric
-            req.checkBody('signature','signature not detected').isAlphanumeric()
-            let errors = req.validationErrors()
-            if(errors){
-                //api_key is empty or not Alphanumeric
-                res.sendStatus(403)
+            if(e===true){
+                // set the token
+                // get signature from post data
+                // check is encoded base64
+                    //sanitize '-'
+                req.checkBody('signature','signature not detected').notEmpty()
+                console.log(req.body.signature)
+                    //check body is isAlphanumeric
+                req.checkBody('signature','signature not detected').isAlphanumeric()
+                let errors = req.validationErrors()
+                if(errors){
+                    //api_key is empty or not Alphanumeric
+                    res.sendStatus(403)
+                }else{
+                    console.log('inelse:datapass:decode signature..')
+                    // verify signature
+                    getpublickeybyid(api_key[1])
+                    .then(e=>{
+                        //e is object of user (users_json_ex)
+                        jwt.verify(req.body.signature,e.pub_key,{algorithm:'RS256'},(err,decoded)=>{
+                            if(err){
+                                console.log('cannot verify this signature')
+                                res.sendStatus(403)
+                            }else{
+                                console.log('verifyed')
+                                req.decoded
+                                next()
+                            }
+                        })
+                    },e=>{
+                        //error cannot getpublickeybyid
+                        res.end(e)
+                    })
+                }
             }else{
-                console.log('inelse:datapass:decode signature..')
-                // decode signature
-                // split signature --> <data_cmd> + <api_secret_key>
-                // req.api_secret_key = <api_secret_key>
-                // req.data_cmd = <data_cmd>
-                next()
+                //apikey is not exist
+                res.end('apikey is not exist')
             }
-        })
-        .catch(e=>{
-            //connot connect database
+        },e=>{
+            // reject
+            //error connot conncet database
             res.end(e)
         })
     }else{
@@ -211,14 +211,49 @@ function verifyToken(req,res,next){
         res.sendStatus(403)
     }
 }
-//how to use it ?
-    /*                              add this position
-                                        |
-                                        v
-        exports.middlewareexample = verifyToken,(req,res) => {
-            ...
+/*
+    //sign stage
+jwt.sign({
+            id:users_json_ex.id,
+            username:users_json_ex.username,
+            api_key:buffer_apikey.apiKey
+            //algorithm:'HS256' is mean HMAC(algorithm) with SHA-256(hash function)
+            //and more algorithm https://github.com/auth0/java-jwt in Available Algorithms section
+        },'secretkey',{algorithm:'HS256'},(err,api_secret_key) => {
+            //console.log("token provided:",api_secret_key)
+            res.json({
+                title:'rest api example',
+                uu_id:buffer_apikey.uuid,
+                api_key:buffer_apikey.apiKey,
+                api_secret_key:api_secret_key
+            })
+        })
+*/ 
+/*  
+    //verify token stage            
+                            add this position
+                                    |
+                                    v
+    exports.middlewareexample = verifyToken,(req,res) => {
+        ...
+    }
+    // and create verifyToken function
+    function verifyToken(req,res,next){...}
+*/
+
+/* 
+    //verify stage
+    jwt.verify(api_secret_key,'secretkey',(err,authData)=>{
+        if(err){
+            res.sendStatus(403)
+        }else{
+            res.json({authData})
+            //use req.data_cmd for filter userdata
+            //if can authData , response desination_user
         }
-    */
+
+    })
+*/
 
 //get data with id function
 getbyid = (id) =>{
@@ -245,11 +280,35 @@ findbyuser_email_exist = (username,email) =>{
     })
 }
 
+findbypublicandapikeyexist = (api_key,pub_key) =>{
+    console.log("findbypublickeyexist")
+    return new Promise((resolve,reject)=>{
+        resolve(
+            users_json_ex.some(e=>e.pub_key===pub_key && e.api_key===api_key)
+        )
+        reject(
+            'error connot conncet database'
+        )
+    })
+}
+
 findbyapikeyexist = (api_key) =>{
-    console.log("findbyapikeyexist")
+    console.log("findbypublickeyexist")
     return new Promise((resolve,reject)=>{
         resolve(
             users_json_ex.some(e=>e.api_key===api_key)
+        )
+        reject(
+            'error connot conncet database'
+        )
+    })
+}
+
+getpublickeybyid = (api_key) =>{
+    console.log("getpublickeybyid")
+    return new Promise((resolve,reject)=>{
+        resolve(
+            users_json_ex.find(e=>e.uuid===uuid_apikey_gen.toUUID(api_key))
         )
         reject(
             'error connot conncet database'
