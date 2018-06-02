@@ -30,6 +30,18 @@ let users = [
         "name": "Sir Crocodile",
         "position": "Former-Shichibukai",
         "destination_id":3
+    },
+    {
+        "id": 3,
+        "uuid":"6d67733d-4901-410c-a9ef-4ab60fd87297",
+        "api_key":"DNKQ6FD-940M236-N7QMNDQ-1ZC755Z",
+        "pub_key":"-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEAguzR5ESkHdsIWvueREuaG5y0dV2kovTgkVqpgTPS3lkcDrmp/J2bXKfJ/oKc\nbuDQdzuLzE/hLMwsMe5lVtOrEySxipWEyDsF0BvwPNklUmRBfWN9tZzPMspzvYNrdSPWgHFP\n1tvMNJwonkPmx1O+ksmFnzNg/7Hgp5IMGL/otsjvnNj4zi6Vv3KZ4abYGOYIdPpNzSyqXmjT\nVIYJ+M8n3V9K27Hp4rcpjFDbsUERpFo5iMnn+gx7hjtC9pP6X4/VdFfAwUw0ML58jN+ktEx3\niWxkd/P2Nx4aBrP5fE4yB8RCjxKnmlHMm49nOyr2sa1g6gja3AQ5Ua1qSqEperUaBwIDAQAB\n-----END RSA PUBLIC KEY-----\n",
+        "username": "testuser",
+        "password": "test123",
+        "email":"test@gmail.com",
+        "name": "Monkey D. Luffy",
+        "position": "Captain",
+        "desination_id":1
     }
 ]
 

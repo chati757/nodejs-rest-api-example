@@ -32,8 +32,7 @@ exports.validator_testing = (req,res) => {
         //console.log('findbyid_user:error')
         //return
     }else{
-        console.log('inelse:datapass:check in database')
-        console.log(req.body.testusername)
+        //msg to user : please wait
         findbyuser_email_exist(req.body.testusername,req.body.testemail)
         .then(e=>{
             //found
