@@ -15,7 +15,7 @@ exports.testheader = (req,res) => {
     res.end()
 }
 
-exports.validator_testing = (req,res) => {
+exports.sign = (req,res) => {
     //------------------------------------checkdata-------------------------------------
     req.checkBody('testusername','username is empty')
     .notEmpty()

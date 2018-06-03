@@ -4,7 +4,7 @@ module.exports = function(app){
     app.get('/',index.main)
     //-----------------get token stage--------------------------
     //sign testing
-    app.post('/test',index.validator_testing)
+    app.post('/sign',index.sign)
     //-----------------tokens protection stage------------------
     app.post('/user_desination',index.verifyToken,index.finddesination_user)
     //-----------------non verify tokens------------------------
