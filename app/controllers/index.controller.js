@@ -7,6 +7,14 @@ exports.main = (req,res) => {
     res.render('index',{title:'rest api example'})
 }
 
+exports.testheader = (req,res) => {
+    console.log(req.headers)
+    res.json({
+        'reqstatus':'ok'
+    })
+    res.end()
+}
+
 exports.validator_testing = (req,res) => {
     //------------------------------------checkdata-------------------------------------
     req.checkBody('testusername','username is empty')
@@ -78,18 +86,6 @@ exports.validator_testing = (req,res) => {
     }
 }
 
-exports.finddesination_user = verifyToken,(req,res) => {
-    //decode data
-    console.log(req.decoded)
-    res.end('complete')
-}
-
-exports.findall_user = verifyToken,(req,res) => {
-    //check token first
-    //console.log('findall_user')
-    res.json(users_json_ex)
-}
-
 //sanitize testing
 exports.findbyid_user = (req,res) => {
     //console.log('findbyid_user')
@@ -111,28 +107,6 @@ exports.findbyid_user = (req,res) => {
     //-------------------------------get data---------------------------------------
     else{
         //console.log('findbyid_user:pass')
-        /*
-        //promise direction style
-        let users_json_filter_Promise= new Promise((resolve,reject)=>{
-            resolve(
-                users_json_ex.filter(e=>e.id===req.params.id)
-            )
-            reject(
-                'database filtering id failed'
-            )
-        })
-        //res.json(users_json_filter)
-        users_json_filter_Promise
-        .then(e=>{
-            //console.log('inthen')
-            res.json(e)
-            //console.log(getbyid(req.params.id))
-        })
-        .catch(e=>{
-            //console.log('catch')
-            res.json('error:',e)
-        })
-        */
         getbyid(req.params.id)
         .then(e=>{
             res.end(e[0].name)
@@ -145,54 +119,54 @@ exports.findbyid_user = (req,res) => {
     }
     //------------------------------------------------------------------------------
 }
-
 //format of token
-    //Authorization: Bearer <access_token> or api_key <api_key>
+    //authorization: Bearer <access_token> or api_key <api_key>
 //<access token> or <api_key>
-function verifyToken(req,res,next){
+exports.verifyToken = (req,res,next) =>{
     console.log("in verifyToken stage")
-    const api_key_header = req.headers['authotization']
+    const api_key = req.headers['api_key']
     //check access token stage
-    if(typeof api_key_header !=='undefined'){
-        // Split at the space
-        const api_key = api_key_header.split(' ')
-        // Get token from array
-        console.log('api_key handle..')
-        console.log(api_key[1])
+    if(typeof api_key !=='undefined'){
+        console.log('tokens handle..')
+        console.log(api_key)
         // check api_key_header_Token in database
-        findbyapikeyexist(api_key[1])
+        findbyapikeyexist(api_key)
         .then(e=>{
             if(e===true){
                 // set the token
                 // get signature from post data
                 // check is encoded base64
                     //sanitize '-'
-                req.checkBody('signature','signature not detected').notEmpty()
-                console.log(req.body.signature)
+                req.checkHeaders('signature','signature not detected')
+                .notEmpty()
+                console.log(req.headers['signature'])
                     //check body is isAlphanumeric
-                req.checkBody('signature','signature not detected').isAlphanumeric()
+                req.checkHeaders('signature','signature not detected')
+                .matches('[A-Z]|[a-z]|[0-9]|\.|_')
                 let errors = req.validationErrors()
                 if(errors){
                     //api_key is empty or not Alphanumeric
                     res.sendStatus(403)
                 }else{
-                    console.log('inelse:datapass:decode signature..')
+                    console.log('signature detected')
+                    console.log('inelse:datapass:signature..')
                     // verify signature
-                    getpublickeybyid(api_key[1])
+                    getpublickeybyid(api_key)
                     .then(e=>{
                         //e is object of user (users_json_ex)
-                        jwt.verify(req.body.signature,e.pub_key,{algorithm:'RS256'},(err,decoded)=>{
+                        jwt.verify(req.headers['signature'],e.pub_key,{algorithm:'RS256'},(err,decoded)=>{
                             if(err){
                                 console.log('cannot verify this signature')
                                 res.sendStatus(403)
                             }else{
                                 console.log('verifyed')
-                                req.decoded
+                                req.decoded = decoded
                                 next()
                             }
                         })
                     },e=>{
                         //error cannot getpublickeybyid
+                        console.log('in error')
                         res.end(e)
                     })
                 }
@@ -203,6 +177,7 @@ function verifyToken(req,res,next){
         },e=>{
             // reject
             //error connot conncet database
+            console.log('in error')
             res.end(e)
         })
     }else{
@@ -253,6 +228,21 @@ jwt.sign({
 
     })
 */
+
+exports.finddesination_user = (req,res) => {
+    //decode data
+    console.log("in finddesination_user")
+    console.log(req.decoded)
+    const decoded = req.decoded
+    res.json({decoded})
+    res.end()
+}
+
+exports.findall_user = (req,res) => {
+    //check token first
+    //console.log('findall_user')
+    res.json(users_json_ex)
+}
 
 //get data with id function
 getbyid = (id) =>{
