@@ -69,15 +69,23 @@ exports.sign = (req,res) => {
                             }
                         )
                     }
+                },e=>{
+                    //[reject handle] cannot connect database
+                    res.end(e)
                 })
                 .catch(e=>{
-                    //connot connect database
+                    //[in resolve error]
+                    //error : apikey is exist in database
                     res.end(e)
                 })
             }
+        },e=>{
+            //[reject handle] cannot connect database
+            res.end(e)
         })
         .catch(e=>{
-            //connot connect database
+            //[in resolve error]
+            //'error : username is exist in database'
             res.end(e)
         })
         //console.log(req.body.testpassword)
@@ -143,6 +151,7 @@ exports.verifyToken = (req,res,next) =>{
                     //check body is isAlphanumeric
                 req.checkHeaders('signature','signature not detected')
                 .matches('[A-Z]|[a-z]|[0-9]|\.|_')
+
                 let errors = req.validationErrors()
                 if(errors){
                     //api_key is empty or not Alphanumeric
@@ -150,7 +159,7 @@ exports.verifyToken = (req,res,next) =>{
                 }else{
                     console.log('signature detected')
                     console.log('inelse:datapass:signature..')
-                    // verify signature
+                    // verify signature using secret key to get apikey
                     getpublickeybyid(api_key)
                     .then(e=>{
                         //e is object of user (users_json_ex)
@@ -300,7 +309,7 @@ getpublickeybyid = (api_key) =>{
             users_json_ex.find(e=>e.uuid===uuid_apikey_gen.toUUID(api_key))
         )
         reject(
-            'error connot conncet database'
+            'error connot connect database'
         )
     })
 }

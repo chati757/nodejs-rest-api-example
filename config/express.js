@@ -4,6 +4,7 @@ const compression = require('compression')
 const bodyParser = require('body-parser')
 const express_validator = require('express-validator')
 const ejs = require('ejs')
+
 //controller
 const jwt = require('jsonwebtoken')
 exports.jsonwebtoken = function(){
