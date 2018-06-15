@@ -49,123 +49,496 @@ RESTFUL API (develop with nodejs and redis)
 
 ### create mvc file stucture
 
-    ..\<project folder> $ create file server.js
+    ..\<project folder> $ file server.js
+        //set default environment
+        process.env.NODE_ENV = process.env.NODE_ENV || 'development' //default env is 'development'
+
+        //require express configuration
+        var express = require('./config/express')
+        var app = express.mainconfig()
+
+        //listening
+        app.listen(3000)
+
+        console.log("server running at http://localhost:3000")
+
+        module.exports = app //for reuse
 
     ..\<project folder> $ folder app
+        ..\<project folder> $ folder routers
+            ..\<project folder> $ file index.route.js
+                module.exports = function(app){
+    
+                    const index = require('../controllers/index.controller')
+                    app.get('/',index.main)
+                    //------------------get token stage--------------------------
+                    //sign stage
+                    app.post('/sign',index.sign)
+                    //------------------tokens protection stage------------------
+                                                [token protection]
+                                                        |
+                                                        v
+                    app.post('/user_desination',index.verifyToken,index.finddesination_user)
+                    //---------non verify tokens or non token protection---------
+                    app.post('/header',index.testheader) //test get header data
+                    app.get('/users',index.findall_user)
+                    app.get('/users:id',index.findbyid_user)
+                }
+                
         ..\<project folder> $ folder controller
             ..\<project folder> $ file index.controller.js
+                //call module from express.js (config file)
+                const jwt = require('../../config/express.js').jsonwebtoken()
+                const uuid_apikey_gen = require('../../config/express.js').uuid_api_key()
+                const key_pair = require('../../config/express.js').key_pair()
+
+                //call database (example)
+                let users_json_ex = require('../models/example/users')
+
+                //connect routing index path and render view
+                exports.main = (req,res) => {
+                    res.render('index',{title:'rest api example'})
+                }
+
+                //testing receive json header [what is look like ?]
+                exports.testheader = (req,res) => {
+                    console.log(req.headers)
+                    res.json({
+                        'reqstatus':'ok'
+                    })
+                    res.end()
+                }
+                
+                //connect routing sign path
+                exports.sign = (req,res) => {
+                    //------------------------------------checkdata-------------------------------------
+                    req.checkBody('testusername','username is empty')
+                    .notEmpty()
+                    req.checkBody('testusername','username is not en-US please change your language first!')
+                    .isAlphanumeric()
+                    req.checkBody('testpassword','password is empty')
+                    .notEmpty()
+                    req.checkBody('testpassword','password is not en-US or password is spacial character!')
+                    .isAlphanumeric()
+                    req.checkBody('testemail','email not detected please check email input again')
+                    .notEmpty().isEmail()
+                    req.checkBody('testemail','use gmail or hotmail only Example: xxx@gmail.com or xxx@hotmail.com')
+                    .matches('@gmail.com|@hotmail.com')//gmail and hotmail only
+                    //-------------------------------------sanitize--------------------------------------
+                    req.sanitizeBody('testemail').normalizeEmail()
+                    //---------------------------------check in database---------------------------------
+                    let errors = req.validationErrors()
+                    if(errors){
+                        //console.log(errors)
+                        //res.end('error id not integer id')
+                        res.end(errors[0].msg)
+                        //console.log('findbyid_user:error')
+                        //return
+                    }else{
+                        //msg to user : please wait
+                        findbyuser_email_exist(req.body.testusername,req.body.testemail)
+                        .then(e=>{
+                            //found
+                            if(e===true){
+                                throw 'error : username is exist in database'
+                            }else{
+                                console.log('username is available')
+                                //check api_key in database
+                                const buffer_uuid_apikey=uuid_apikey_gen.create()
+                                const buffer_keypair = key_pair()
+                                findbypublicandapikeyexist(buffer_uuid_apikey.apiKey,buffer_keypair.public)
+                                .then(e=>{
+                                    if(e===true){
+                                        throw 'error : apikey is exist in database'
+                                    }
+                                    else{
+                                        console.log('apikey and public key is available')
+                                        //put api_key in database [id,username,password,apiKey]
+                                        console.log(buffer_keypair)
+                                        console.log(buffer_uuid_apikey)
+                                        //response api_key and secret_api_key
+                                        res.json(
+                                            {
+                                                'api key':buffer_uuid_apikey.apiKey,
+                                                'secret key':buffer_keypair.private
+                                            }
+                                        )
+                                    }
+                                },e=>{
+                                    //[reject handle] cannot connect database
+                                    res.end(e)
+                                })
+                                .catch(e=>{
+                                    //[in resolve error]
+                                    //error : apikey is exist in database
+                                    res.end(e)
+                                })
+                            }
+                        },e=>{
+                            //[reject handle] cannot connect database
+                            res.end(e)
+                        })
+                        .catch(e=>{
+                            //[in resolve error]
+                            //'error : username is exist in database'
+                            res.end(e)
+                        })
+                        //console.log(req.body.testpassword)
+                        //console.log(req.body.testemail)
+                        
+                    }
+                }
+
+                //sanitize testing
+                exports.findbyid_user = (req,res) => {
+                    //console.log('findbyid_user')
+                    //console.log(req.params.id)
+                    //--------------------------check and sanitize---------------------------------
+                    req.checkParams('id','id not integer').isNumeric()//check isNumeric
+                    req.sanitizeParams('id').trim(':')//':1'>'1'
+                    req.sanitizeParams('id').toInt()//'1'>1 <--because database id is integer
+                    //console.log('after sanitizeParams :',req.params.id)
+                    //check error from checkParams and sanitizeParams
+                    let errors = req.validationErrors()
+                    if(errors){
+                        //console.log(errors)
+                        res.end('error id not integer id')
+                        //console.log('findbyid_user:error')
+                        //return
+                    }
+                    //------------------------------------------------------------------------------
+                    //-------------------------------get data---------------------------------------
+                    else{
+                        //console.log('findbyid_user:pass')
+                        getbyid(req.params.id)
+                        .then(e=>{
+                            res.end(e[0].name)
+                        })
+                        .catch(e=>{
+                            console.log('error id data out of scope in database')
+                            res.end('error:no id')
+                        })
+                        
+                    }
+                    //------------------------------------------------------------------------------
+                }
+                //format of token
+                    //authorization: Bearer <access_token> or api_key <api_key>
+                //<access token> or <api_key>
+                exports.verifyToken = (req,res,next) =>{
+                    console.log("in verifyToken stage")
+                    const api_key = req.headers['api_key']
+                    //check access token stage
+                    if(typeof api_key !=='undefined'){
+                        console.log('tokens handle..')
+                        console.log(api_key)
+                        // check api_key_header_Token in database
+                        findbyapikeyexist(api_key)
+                        .then(e=>{
+                            if(e===true){
+                                // set the token
+                                // get signature from post data
+                                // check is encoded base64
+                                    //sanitize '-'
+                                req.checkHeaders('signature','signature not detected')
+                                .notEmpty()
+                                console.log(req.headers['signature'])
+                                    //check body is isAlphanumeric
+                                req.checkHeaders('signature','signature not detected')
+                                .matches('[A-Z]|[a-z]|[0-9]|\.|_')
+
+                                let errors = req.validationErrors()
+                                if(errors){
+                                    //api_key is empty or not Alphanumeric
+                                    res.sendStatus(403)
+                                }else{
+                                    console.log('signature detected')
+                                    console.log('inelse:datapass:signature..')
+                                    // verify signature using secret key to get apikey
+                                    getpublickeybyid(api_key)
+                                    .then(e=>{
+                                        //e is object of user (users_json_ex)
+                                        jwt.verify(req.headers['signature'],e.pub_key,{algorithm:'RS256'},(err,decoded)=>{
+                                            if(err){
+                                                console.log('cannot verify this signature')
+                                                res.sendStatus(403)
+                                            }else{
+                                                console.log('verifyed')
+                                                req.decoded = decoded
+                                                next()
+                                            }
+                                        })
+                                    },e=>{
+                                        //error cannot getpublickeybyid
+                                        console.log('in error')
+                                        res.end(e)
+                                    })
+                                }
+                            }else{
+                                //apikey is not exist
+                                res.end('apikey is not exist')
+                            }
+                        },e=>{
+                            // reject
+                            //error connot conncet database
+                            console.log('in error')
+                            res.end(e)
+                        })
+                    }else{
+                        //forbidden
+                        res.sendStatus(403)
+                    }
+                }
+                /*
+                    //sign stage
+                jwt.sign({
+                            id:users_json_ex.id,
+                            username:users_json_ex.username,
+                            api_key:buffer_apikey.apiKey
+                            //algorithm:'HS256' is mean HMAC(algorithm) with SHA-256(hash function)
+                            //and more algorithm https://github.com/auth0/java-jwt in Available Algorithms section
+                        },'secretkey',{algorithm:'HS256'},(err,api_secret_key) => {
+                            //console.log("token provided:",api_secret_key)
+                            res.json({
+                                title:'rest api example',
+                                uu_id:buffer_apikey.uuid,
+                                api_key:buffer_apikey.apiKey,
+                                api_secret_key:api_secret_key
+                            })
+                        })
+                */ 
+                /*  
+                    //verify token stage            
+                                            add this position
+                                                    |
+                                                    v
+                    exports.middlewareexample = verifyToken,(req,res) => {
+                        ...
+                    }
+                    // and create verifyToken function
+                    function verifyToken(req,res,next){...}
+                */
+
+                /* 
+                    //verify stage
+                    jwt.verify(api_secret_key,'secretkey',(err,authData)=>{
+                        if(err){
+                            res.sendStatus(403)
+                        }else{
+                            res.json({authData})
+                            //use req.data_cmd for filter userdata
+                            //if can authData , response desination_user
+                        }
+
+                    })
+                */
+
+                //after verifytoken stage(token protection) bypass function to find desination_user
+                //can check in index.route.js
+                exports.finddesination_user = (req,res) => {
+                    //decode data
+                    console.log("in finddesination_user")
+                    console.log(req.decoded)
+                    const decoded = req.decoded
+                    res.json({decoded})
+                    res.end()
+                }
+
+                //testing connect routing without token protection
+                exports.findall_user = (req,res) => {
+                    //check token first
+                    //console.log('findall_user')
+                    res.json(users_json_ex)
+                }
+                
+                //-------------------------------function for controller------------------------------
+                //get data with id function
+                getbyid = (id) =>{
+                    console.log("ingetbyid")
+                    return new Promise((resolve,reject)=>{
+                        resolve(
+                            users_json_ex.filter(e=>e.id===id)
+                        )
+                        reject(
+                            'database filtering id failed'
+                        )
+                    })
+                }
+
+                findbyuser_email_exist = (username,email) =>{
+                    console.log("findbyuser_email_exist")
+                    return new Promise((resolve,reject)=>{
+                        resolve(
+                            users_json_ex.some(e=>e.username===username || e.email===email)
+                        )
+                        reject(
+                            'error connot conncet database'
+                        )
+                    })
+                }
+
+                findbypublicandapikeyexist = (api_key,pub_key) =>{
+                    console.log("findbypublickeyexist")
+                    return new Promise((resolve,reject)=>{
+                        resolve(
+                            users_json_ex.some(e=>e.pub_key===pub_key && e.api_key===api_key)
+                        )
+                        reject(
+                            'error connot conncet database'
+                        )
+                    })
+                }
+
+                findbyapikeyexist = (api_key) =>{
+                    console.log("findbypublickeyexist")
+                    return new Promise((resolve,reject)=>{
+                        resolve(
+                            users_json_ex.some(e=>e.api_key===api_key)
+                        )
+                        reject(
+                            'error connot conncet database'
+                        )
+                    })
+                }
+
+                getpublickeybyid = (api_key) =>{
+                    console.log("getpublickeybyid")
+                    return new Promise((resolve,reject)=>{
+                        resolve(
+                            users_json_ex.find(e=>e.uuid===uuid_apikey_gen.toUUID(api_key))
+                        )
+                        reject(
+                            'error connot connect database'
+                        )
+                    })
+                }
+                //------------------------------------------------------------------------------------
 
         ..\<project folder> $ folder models 
             (for get and post json example)
             ..\<project folder> $ folder example
                 ..\<project folder> $ file users.js
-                    var users = [
-                        {
-                            "id": 0,
-                            "uuid":"",
-                            "api_key":"",
-                            "username": "admin",
-                            "password": "admin123",
-                            "name": "black cyber master",
-                            "position": "unknow"
-                        },
-                        {
-                            "id": 1,
-                            "uuid":"",
-                            "api_key":"",
-                            "username": "goldroger",
-                            "password": "goldroger123",
-                            "name": "Gol D. Roger",
-                            "position": "Pirate King",
-                            "destination_id":2
-                        },
-                        {
-                            "id": 2,
-                            "uuid":"",
-                            "api_key":"",
-                            "username": "mrzero",
-                            "password": "mrzero123",
-                            "name": "Sir Crocodile",
-                            "position": "Former-Shichibukai",
-                            "destination_id":3
-                        },
-                        {
-                            "id": 3,
-                            "uuid":"",
-                            "api_key":"",
-                            "username": "luffy",
-                            "password": "luffy123",
-                            "name": "Monkey D. Luffy",
-                            "position": "Captain",
-                            "desination_id":1
-                        }
-                    ]
+                    let users = [
+                    {
+                        "id": 0,
+                        "uuid":"",
+                        "pub_key":"",
+                        "username": "admin",
+                        "password": "admin123",
+                        "email":"unknow@gmail.com",
+                        "name": "black cyber master",
+                        "position": "unknow"
+                    },
+                    {
+                        "id": 1,
+                        "uuid":"",
+                        "pub_key":"",
+                        "username": "goldroger",
+                        "password": "goldroger123",
+                        "email":"goldroger@gmail.com",
+                        "name": "Gol D. Roger",
+                        "position": "Pirate King",
+                        "destination_id":2
+                    },
+                    {
+                        "id": 2,
+                        "uuid":"",
+                        "pub_key":"",
+                        "username": "mrzero",
+                        "password": "mrzero123",
+                        "email":"mrzero@gmail.com",
+                        "name": "Sir Crocodile",
+                        "position": "Former-Shichibukai",
+                        "destination_id":3
+                    },
+                    {
+                        "id": 3,
+                        "uuid":"6d67733d-4901-410c-a9ef-4ab60fd87297",
+                        "api_key":"DNKQ6FD-940M236-N7QMNDQ-1ZC755Z",
+                        "pub_key":"-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEAguzR5ESkHdsIWvueREuaG5y0dV2kovTgkVqpgTPS3lkcDrmp/J2bXKfJ/oKc\nbuDQdzuLzE/hLMwsMe5lVtOrEySxipWEyDsF0BvwPNklUmRBfWN9tZzPMspzvYNrdSPWgHFP\n1tvMNJwonkPmx1O+ksmFnzNg/7Hgp5IMGL/otsjvnNj4zi6Vv3KZ4abYGOYIdPpNzSyqXmjT\nVIYJ+M8n3V9K27Hp4rcpjFDbsUERpFo5iMnn+gx7hjtC9pP6X4/VdFfAwUw0ML58jN+ktEx3\niWxkd/P2Nx4aBrP5fE4yB8RCjxKnmlHMm49nOyr2sa1g6gja3AQ5Ua1qSqEperUaBwIDAQAB\n-----END RSA PUBLIC KEY-----\n",
+                        "username": "testuser",
+                        "password": "test123",
+                        "email":"test@gmail.com",
+                        "name": "Monkey D. Luffy",
+                        "position": "Captain",
+                        "desination_id":1
+                    }
+                ]
 
-        ..\<project folder> $ folder routers
-            ..\<project folder> $ file index.route.js
+                module.exports = users
 
         ..\<project folder> $ folder view (for future)
-            ..\<project folder> $ file
+            ..\<project folder> $ file index.ejs
 
     ..\<project folder> $ folder config
         ..\<project folder> $ folder dev
-        ..\<project folder> $ folder prodection
+        ..\<project folder> $ folder production
         ..\<project folder> $ file express.js
-            import module
-                const express = require('express')
-                const morgan = require('morgan')
-                const compression = require('compression')
-                const bodyParser = require('body-parser')
-                const validator = require('express-validator')
+            //require all module in package.json
+            const express = require('express')
+            const morgan = require('morgan')
+            const compression = require('compression')
+            const bodyParser = require('body-parser')
+            const express_validator = require('express-validator')
+            const ejs = require('ejs')
 
-            create application function
+            //allow module in controller
+            const jwt = require('jsonwebtoken')
+            exports.jsonwebtoken = function(){
+                return jwt
+            }
+            const uuid_api_key = require('uuid-apikey')
+            exports.uuid_api_key = function(){
+                return uuid_api_key
+            }
+            const key_pair = require('keypair')
+            exports.key_pair = function(){
+                return key_pair
+            }
+
+            //main config for server
+            exports.mainconfig = function(){
+                //call express module
                 const app = express()
 
-            set env
+                //set default for debug mode in development stage
                 if(process.env.NODE_ENV === 'development') {
-                app.use(morgan('dev'))
+                    app.use(morgan('dev'))
                 }else{
                     app.use(compression)
                 }
 
-            set body-parser (for get datatype request from client Ex.req.body)
                 app.use(bodyParser.urlencoded({
                     extended:true //false -> support string and array only , ture -> support more..
-                }));
-
-            set body-parser (json avaliable)
+                }))
                 app.use(bodyParser.json())//json avaliable
+                app.use(express_validator())
 
-            set validator after json avaliable
-                app.use(validator())
-
-            set defult view render directory
+                //-----------------view----------------------
                 app.set('views','./app/views')
-
-            set route for usr controller
-                require('../app/routes/index.routes')(app)
-
-            set public resource directoty for client
+                app.set('view engine','ejs')
+                //-----------------resource------------------
                 app.use(express.static('./public'))
-            
-            return function (for server.js)
-                return app;
 
+                //-----------------route---------------------
+                require('../app/routes/index.route')(app) //call module.exports = function(app) in index.routes.js
 
-    ..\<project folder> $ folder public (for future)
+                return app
+            }
+
+    ..\<project folder> $ folder public (for future)(for share resource)
 
     ..\<project folder> $ file server.js
-
-        set default env for start server
+        //set default env for start server
             process.env.NODE_ENV = process.env.NODE_ENV || 'development'; //default env is 'development'
 
-        import internal config (express.js)
+        //import internal config (express.js)
             var express = require('./config/express');
 
-        usring express
+        //usring express
             var app = express()
 
-        set application server for listen port 3000
+        //set application server for listen port 3000
             app.listen(3000);
 
         (optional for reuse server application)
