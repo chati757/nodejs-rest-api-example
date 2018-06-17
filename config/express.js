@@ -5,6 +5,17 @@ const bodyParser = require('body-parser')
 const express_validator = require('express-validator')
 const ejs = require('ejs')
 
+//for ssl---
+const fs = require('fs')
+const https = require('https')
+const path = require('path')
+
+const httpsOptions = {
+    key: fs.readFileSync(path.join(__dirname,'/env/dev/ssl certificate/server.key')),
+    cert: fs.readFileSync(path.join(__dirname,'./env/dev/ssl certificate/server.crt'))
+}
+//----------
+
 //allow module in controller
 const jwt = require('jsonwebtoken')
 exports.jsonwebtoken = function(){
@@ -21,6 +32,8 @@ exports.key_pair = function(){
 
 exports.mainconfig = function(){
     const app = express()
+    app.disable('x-powered-by')
+
     if(process.env.NODE_ENV === 'development') {
         app.use(morgan('dev'))
     }else{
@@ -42,6 +55,5 @@ exports.mainconfig = function(){
     //-----------------route---------------------
     require('../app/routes/index.route')(app) //call module.exports = function(app) in index.routes.js
 
-
-    return app
+    return https.createServer(httpsOptions,app)
 }

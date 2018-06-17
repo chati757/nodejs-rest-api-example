@@ -3,9 +3,9 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development' //default env is 'd
 var express = require('./config/express')
 var app = express.mainconfig()
 
-
-app.listen(3000)
-
-console.log("server running at http://localhost:3000")
+//https type
+app.listen(3000,()=>{
+    console.log("server running at https://localhost:3000")
+})
 
 module.exports = app //for reuse

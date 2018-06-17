@@ -7,12 +7,22 @@ exports.main = (req,res) => {
     res.render('index',{title:'rest api example'})
 }
 
+//security testing about get method
+//http://localhost:3000/header?name=Bob&name=Sally
 exports.testheader = (req,res) => {
     console.log(req.headers)
-    res.json({
-        'reqstatus':'ok'
-    })
-    res.end()
+    //security reason
+    if(typeof req.query.name !== 'string'){
+        console.log('error because is not string')
+        console.log('Is array')
+        res.sendStatus(403)
+    }else{
+        res.json({
+            'reqstatus':'ok',
+            'data':req.query.name
+        })
+        res.end()
+    }
 }
 
 exports.sign = (req,res) => {

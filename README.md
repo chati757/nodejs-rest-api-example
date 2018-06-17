@@ -84,7 +84,7 @@ RESTFUL API (develop with nodejs and redis)
                     app.get('/users',index.findall_user)
                     app.get('/users:id',index.findbyid_user)
                 }
-                
+
         ..\<project folder> $ folder controller
             ..\<project folder> $ file index.controller.js
                 //call module from express.js (config file)
@@ -482,6 +482,17 @@ RESTFUL API (develop with nodejs and redis)
             const express_validator = require('express-validator')
             const ejs = require('ejs')
 
+            //for ssl---
+            const fs = require('fs')
+            const https = require('https')
+            const path = require('path')
+
+            const httpsOptions = {
+                key: fs.readFileSync(path.join(__dirname,'/env/dev/ssl certificate/server.key')),
+                cert: fs.readFileSync(path.join(__dirname,'./env/dev/ssl certificate/server.crt'))
+            }
+            //----------
+
             //allow module in controller
             const jwt = require('jsonwebtoken')
             exports.jsonwebtoken = function(){
@@ -500,6 +511,9 @@ RESTFUL API (develop with nodejs and redis)
             exports.mainconfig = function(){
                 //call express module
                 const app = express()
+
+                //disable header 'x-powered-by' (security reason)
+                app.disable('x-powered-by')
 
                 //set default for debug mode in development stage
                 if(process.env.NODE_ENV === 'development') {
@@ -523,7 +537,7 @@ RESTFUL API (develop with nodejs and redis)
                 //-----------------route---------------------
                 require('../app/routes/index.route')(app) //call module.exports = function(app) in index.routes.js
 
-                return app
+                return https.createServer(httpsOptions,app)
             }
 
     ..\<project folder> $ folder public (for future)(for share resource)
@@ -545,6 +559,8 @@ RESTFUL API (develop with nodejs and redis)
             module.exports = app; //for reuse
 
 ## security (additional)
+    security workflow in this project please check at <webapi_workflow.png>
+    *(And below from this is reference)
 
 ### vulnerability syntax extension
     https://nodesecurity.io/advisories/
@@ -595,7 +611,7 @@ RESTFUL API (develop with nodejs and redis)
         structure XXXX.YYYY.ZZZZ
         XXXX = base64_encode(header)
             typ : 'JWT' 
-            alg : '<algorithm for hash Ex.HS512>'
+            alg : '<algorithm for hash Ex.HS512,RS256>'
         YYYY = base64_encode(payload)
             iss : "<unique id >"
             iat : <create time>
@@ -617,6 +633,7 @@ RESTFUL API (develop with nodejs and redis)
 
 ### HTTPS/TLS
     https://nodejs.org/api/tls.html
+    https://www.youtube.com/watch?v=zR6HggKUe2E
 
 ### encyption
     type of encyption (3 types)
@@ -643,11 +660,94 @@ RESTFUL API (develop with nodejs and redis)
 
     type of hash function
         https://en.wikipedia.org/wiki/List_of_hash_functions
-    
-    
 
 ### encypt data library(Ex.post data)
     https://nodejs.org/api/crypto.html
 
-### hiden x-power-by header (attacker can determine what technology)
-    https://www.youtube.com/watch?v=W-8XeQ-D1RI
+### basic web security infomation about expressjs framework (attacker can determine what technology)
+    disable x-powered-by display in header (attacker can determine what technology) 
+        resolve:
+            ..\<project folder> $ config\express.js
+                app.disable('x-powered-by')
+
+    about /get if request http://localhost:3000/header?name=Bob&name=Sally
+    name is change type from string to array
+    *array is not expected some situation and might be not secure
+        resolve:
+            ..\<project folder> $ controllers\index.controller.js
+                if(typeof name !== 'string'){
+                    res.sendStatus(403)
+                }else{
+                    //ok
+                }
+
+    strict transport security (SSL-strip protection)(man in the middle protection)
+    attacker change https of victim to http (with MITM) and server receive http from attacker then server communicate user with http
+        resolve:
+            prevents any HTTPS page from being served over HTTP (in combination with SSL(HTTPS))
+            (tell web browser ,don't serve this page unless it's being served over SSL(HTTPS))
+            ref:https://www.youtube.com/watch?v=JdItXP4NuzY
+            ref:https://www.youtube.com/watch?v=zEV3HOuM_Vw
+
+            install openssl to testing in localhost first
+                openssl tools for generate certificates for testing this topic
+                https://sourceforge.net/projects/openssl/?source=typ_redirect
+
+                how to generate certificates with openssl (window version) (for linux : in the future)
+                    document
+                        https://www.akadia.com/services/ssh_test_certificate.html
+                    video
+                        https://www.youtube.com/watch?v=s76l4BhY3FY
+                        problem : can't open config file : <..>/openssl.cnf
+                        resolve : set OPENSSL_CONF=<path-to-OpenSSL-install-dir>\bin\openssl.cnf
+                            *(run this before usring openssl.exe if this error msg not show again ,it's ok)
+                            *(if not work right-click openssl.cnf [properties]-->click unblock button)
+                    workflow : generate CA workflow.png (use openssl and follow by workflow)
+
+                how to setting webbrowser and add some method in nodejs+express
+                    https://www.youtube.com/watch?v=8ptiZlO7ROs
+                    
+                    ..\<project folder> $ create folder app/config/env/dev/ssl certificate
+                    
+
+                    ..\<project folder> $ config/express.js
+                        *copy-paste CA and key in this folder
+                            //for ssl---
+                            const fs = require('fs')
+                            const https = require('https')
+                            const path = require('path')
+
+                            const httpsOptions = {
+                                key: fs.readFileSync(path.join(__dirname,'/env/dev/ssl certificate/server.key')),
+                                cert: fs.readFileSync(path.join(__dirname,'./env/dev/ssl certificate/server.crt'))
+                            }
+                            //----------
+                            exports.mainconfig = function(){
+                                return https.createServer(httpsOptions,app) //available https only
+                            }
+                    
+                    ..\<project folder> $ app/routes/index.route.js
+                        //add pre-route for strict https only (when request http it's will be change to https automatically)
+                        //*if not add Strict-Transport-Security in header setting it's not will be change to https
+                        module.exports = function(app){
+                            app.use(function (req, res, next) {
+                                console.log('in pre-routing')
+                                res.setHeader('Strict-Transport-Security','max-age=8640000; includeSubDomains')
+                                next()
+                            })
+                        }
+
+                    chrome for testing
+                        chrome://settings/privacy > certificate manager
+                        when request https://localhost:3000 is goto https://localhost:3000 (immediately)(not ask certificate)
+
+                    openssl testing command (if verify return code 0 is ok)
+                        *copy-paste ca.crt file into path of openssl installation
+                        s_client -connect localhost:3000 -CAfile ca.crt
+                        
+            
+            in middleware or preroute
+                res.setHeader('Strict-Transport-Security','max-age=8640000; includeSubDomains')//includeSubDomains it's mean all SubDomains(Is more secure than no this option)
+                //if not option includeSubDomains is mean one of SubDomain only (not secure)
+
+    *ref : https://www.youtube.com/watch?v=W-8XeQ-D1RI
