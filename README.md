@@ -745,9 +745,105 @@ RESTFUL API (develop with nodejs and redis)
                         *copy-paste ca.crt file into path of openssl installation
                         s_client -connect localhost:3000 -CAfile ca.crt
                         
-            
             in middleware or preroute
                 res.setHeader('Strict-Transport-Security','max-age=8640000; includeSubDomains')//includeSubDomains it's mean all SubDomains(Is more secure than no this option)
                 //if not option includeSubDomains is mean one of SubDomain only (not secure)
+
+    Content Security Policy (CSP)(an-ti cross-site-scripting or data injection)
+        ref : https://content-security-policy.com/
+        Identify the source of the webpage component (where are source come from ?)
+        resolve:
+            ..\<project folder> $ app/routes/index.route.js
+                //Content Security Policy
+                const policy ="\
+                default-src 'self' https://apis.google.com https://localhost:3000/;\
+                form-action 'self' https://localhost:3000/*;"
+                    
+                app.use(function (req, res, next) {
+                    console.log('Content Security Policy protection')
+                    //firefox and internet explorer
+                    //res.setHeader("X-Content-Security-Policy",policy)
+                    //safari and chrome 
+                    res.setHeader("X-Webkit-CSP",policy)
+                    next()
+                })
+
+    Cookies Security (this project not using)
+        not allow javascript to read cookies in the client-side
+            Example (not allow function) (document.cookie) (client-side)
+                function alertCookie() {
+                    alert(document.cookie);
+                }
+                <button onclick="alertCookie()">Show cookies</button>
+        resolve:
+            const app = express();
+
+            type 1 [app.use client-side]:
+                const cookie_session = require('cookie-session')
+                app.use(cookie_session{
+                    secret:"test123",
+                    key:["test456","test789"],
+                    httpOnly:true,
+                    secure:ture
+                })
+
+                //incase setting in middleware
+                app.use(function(req,res,next){
+                    req.sessionOptions.httpOnly = true
+                    req.sessionOptions.secure = true
+                                            //[in app.use default setting cookie_session]
+                                            //                   |
+                                            //                   v
+                    req.sessionOptions.maxAge = 60000 = req.cookie_session.maxAge || req.sessionOptions.maxAge //(old value)
+                })
+
+                //incase get cookie_session
+                app.use(function(req,res,next){
+                    req.session.<nameof cookie-session>
+                })
+
+            type 2 [app.use server-side](*secure more than client-side)
+                const express_session = require('express-session')
+                app.use(express_session{
+                    secret:"test123",
+                    resave:false,
+                    saveUninitialized:true,
+                    cookie:{
+                        httpOnly:true,
+                        secure:ture
+                    }
+                })
+
+                //incase setting in middleware
+                app.use(function(req,res,next){
+                    express_session.cookie.httpOnly = true
+                    express_session.cookie.secure = true
+                    express_session.maxAge = 60000 //milliseconds
+                })
+
+                //incase get express-session
+                app.use(function(req,res,next){
+                    req.session.cookie.<nameof cookie-session>
+                })
+
+    anti-xframe from another webside
+        not allow x-frame from outsider
+        resolve:
+            app.use(function (req, res, next) {
+                    console.log('anti-xframe')
+                    res.setHeader("X-Frame-Options","deny")
+                    //incase using iframe in same origin
+                    //res.setHeader("X-Frame-Options","sameorigin")
+                    next()
+            })
+
+    anti-cross-site-request forgery (sign page protection)
+    
+        resolve:
+    
+    username enumeration
+        An attacker may be guessing from a error massage (Ex.login page)
+        resolve:
+            "invalid username or password"
 
     *ref : https://www.youtube.com/watch?v=W-8XeQ-D1RI
