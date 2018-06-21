@@ -11,6 +11,7 @@ module.exports = function(app){
     //Content Security Policy
     const policy ="\
     default-src 'self' https://apis.google.com https://localhost:3000/;\
+    script-src 'self';\
     form-action 'self' https://localhost:3000/*;"
         
     app.use(function (req, res, next) {
@@ -26,7 +27,14 @@ module.exports = function(app){
     //set multi-header with express-framework function
     app.use(function (req, res, next) {
         console.log('Anti-X-Frame')
-        res.setHeader("X-Frame-Options","deny")
+        res.setHeader("X-Frame-Options","DENY")
+        next()
+    })
+
+    //set an-ti DNS-Prefetch
+    app.use(function (req, res, next) {
+        console.log('Anti-DNS-Prefetch')
+        res.setHeader("X-DNS-Prefetch-Control","off")
         next()
     })
     //-------------------------------------------------------------------------

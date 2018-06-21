@@ -757,6 +757,7 @@ RESTFUL API (develop with nodejs and redis)
                 //Content Security Policy
                 const policy ="\
                 default-src 'self' https://apis.google.com https://localhost:3000/;\
+                script-src 'self';\
                 form-action 'self' https://localhost:3000/*;"
                     
                 app.use(function (req, res, next) {
@@ -837,7 +838,7 @@ RESTFUL API (develop with nodejs and redis)
                     next()
             })
 
-    anti-cross-site-request forgery (sign page protection)
+    anti-cross-site-request forgery (+MITM) (sign page protection)
     
         resolve:
     
