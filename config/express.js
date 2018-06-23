@@ -11,10 +11,9 @@ const https = require('https')
 const path = require('path')
 
 const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname,'/env/dev/ssl certificate/server.key')),
-    cert: fs.readFileSync(path.join(__dirname,'./env/dev/ssl certificate/server.crt'))
+    key: fs.readFileSync(path.join(__dirname,'/env/dev/ssl certificate/https/server.key')),
+    cert: fs.readFileSync(path.join(__dirname,'./env/dev/ssl certificate/https/server.crt'))
 }
-//----------
 
 //allow module in controller
 const jwt = require('jsonwebtoken')
@@ -55,5 +54,6 @@ exports.mainconfig = function(){
     //-----------------route---------------------
     require('../app/routes/index.route')(app) //call module.exports = function(app) in index.routes.js
 
+    //https type
     return https.createServer(httpsOptions,app)
 }

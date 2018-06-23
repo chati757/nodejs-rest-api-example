@@ -1,7 +1,7 @@
 module.exports = function(app){
     
     //--------------------------------pre-route----------------------------------
-    //Strict-Transport-Security
+    //Strict-Transport-Security (ssl)
     app.use(function (req, res, next) {
         console.log('Strict-Transport-Security protection')
         res.setHeader('Strict-Transport-Security','max-age=8640000; includeSubDomains;')
@@ -37,6 +37,21 @@ module.exports = function(app){
         res.setHeader("X-DNS-Prefetch-Control","off")
         next()
     })
+
+    //ienoopen [for IE]
+    app.use(function (req, res, next) {
+        console.log('Ienopen')
+        res.setHeader("X-Download-Options","noopen")
+        next()
+    })
+
+    //XSS protection [for IE][same as CSP]
+    app.use(function (req, res, next) {
+        console.log('xxs-protection')
+        res.setHeader("X-XSS-Protection","1; mode=block")
+        next()
+    })
+    
     //-------------------------------------------------------------------------
 
 
